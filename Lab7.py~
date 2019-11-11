@@ -1,0 +1,91 @@
+"""
+Lab 7
+
+Ethan Roubenoff
+
+To be loaded into jupyter notebook, eventuall
+"""
+
+import random
+random.seed(0)
+import numpy as np
+np.random.seed(0)
+import requests as re
+from skimage import io
+import matplotlib.pyplot as plt
+
+
+def download_file(url, local_filename):
+    r = re.get(url, stream=True)
+    with open(local_filename, 'wb') as f:
+        for chunk in r.iter_content(chunk_size = 1024):
+            if chunk:
+                f.write(chunk)
+    return(local_filename)
+
+def q1():
+    Berkeley_lat = "37.87"
+    Berkeley_lon = "-122.26"
+    date = "2014-05-21"
+
+    base_url = "https://api.nasa.gov/planetary/earth/imagery/"
+    image_query = base_url+"?lat="+Berkeley_lat+"&lon="+Berkeley_lon+"&date="+date
+    image_query = image_query+"&api_key="+my_api_key
+    img_a = image_query
+
+    r = re.get(image_query)
+    img_b = r.url
+
+    r = re.get(base_url, params = 
+            {"lat" : Berkeley_lat, "lon" : Berkeley_lon, 
+                "date": date, "api_key":my_api_key})
+    img_c = r.url
+    assert img_a == img_b == img_c
+
+    # Question 1
+    nasa_reply_url = r.json()["url"]
+    download_file(nasa_reply_url, "img.png")
+    im = io.imread("img.png")
+    plt.imshow(im)
+   # plt.show()
+
+    print("Numpy array im is "+ str(im.shape))
+
+    # Question 2
+    fig, axes = plt.subplots(ncols = 3)
+    axes[0].imshow(im[:, :, 0], cmap='Greys')
+    axes[0].set_title("Red")
+    axes[1].imshow(im[:, :, 1], cmap='Greys')
+    axes[1].set_title("Green")
+    axes[2].imshow(im[:, :, 2], cmap='Greys')
+    axes[2].set_title("Blue")
+    #plt.show()
+
+    # Question 3:
+    plt.close()
+    Berkeley_lat_S1 = str(37.87 + 0.25)
+    Berkeley_lat_N1 = str(37.87 - 0.25)
+    Berkeley_lat_N2 = str(37.87 - 0.50)
+
+    S1 = re.get(base_url, params = 
+            {"lat" : Berkeley_lat_S1, "lon" : Berkeley_lon, 
+                "date": date, "api_key":my_api_key})
+    download_file(S1.json()['url'], "S1.png")
+    S1 = io.imread("S1.png")
+    N1 = re.get(base_url, params = 
+            {"lat" : Berkeley_lat_N1, "lon" : Berkeley_lon, 
+                "date": date, "api_key":my_api_key})
+    download_file(N1.json()['url'], "N1.png")
+    N1 = io.imread("N1.png")
+    N2 = re.get(base_url, params = 
+            {"lat" : Berkeley_lat_N2, "lon" : Berkeley_lon, 
+                "date": date, "api_key":my_api_key})
+    download_file(N2.json()['url'], "N2.png")
+    N2 = io.imread("N2.png")
+
+    stack  = np.vstack((N2, N1, im, S1))
+    plt.imshow(stack)
+    plt.show()
+if __name__ == "__main__":
+    my_api_key = "YKZXKO7aW8M9UgLfxoLMlPb3W9TO7mB6rBN0gK7k"
+    q1()
